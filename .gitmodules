@@ -1,0 +1,6 @@
+[submodule "dependencies/sleepy-discord"]
+	path = dependencies/sleepy-discord
+	url = https://github.com/yourWaifu/sleepy-discord.git
+[submodule "dependencies/sdbus-cpp"]
+	path = dependencies/sdbus-cpp
+	url = https://github.com/Kistler-Group/sdbus-cpp.git
