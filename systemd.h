@@ -1,6 +1,11 @@
 #ifndef SYSTEMD_H
 #define SYSTEMD_H
 #define DBUS_PROPERTY(type, str) type str() { return this->getProperty(#str); }
+#define DBUS_SIGNAL(name) void register##name(sdbus::signal_handler func) \
+{ \
+    proxy->registerSignalHandler(interface, #name, func); \
+    proxy->finishRegistration(); \
+}
 
 #include <iostream>
 #include <sdbus-c++/sdbus-c++.h>
@@ -9,10 +14,12 @@
 // i wrap the wrapper
 class dbusProxy {
 public:
-    dbusProxy(std::string destination, std::string objectpath);
+    dbusProxy(std::string destination, std::string objectpath, std::string interface);
     sdbus::Variant getProperty(std::string prop);
 protected:
     std::unique_ptr<sdbus::IProxy> proxy;
+    // todo fix lmao
+    std::string interface;
 };
 
 
@@ -47,15 +54,26 @@ public:
     SystemdUnit getUnit(std::string service);
 
     // org.freedesktop.systemd1.Manager
-    void registerJobNew(sdbus::signal_handler func);
 
     // property getters
     DBUS_PROPERTY(std::string, Version);
     DBUS_PROPERTY(std::string, Features);
     DBUS_PROPERTY(std::string, Tainted);
 
+    // signal callbacks
+    //void registerJobNew(sdbus::signal_handler func);
+    DBUS_SIGNAL(JobNew);
+    DBUS_SIGNAL(StartupFinished);
+    void unregisterAll();
 
     // raw dbus functions that need processing.
+    void PowerOff();
+    sdbus::ObjectPath StartUnit(std::string name, std::string mode);
+
+    // ListUnits(out a(ssssssouso) units)
+    typedef sdbus::Struct<std::string, std::string, std::string, std::string, std::string,
+                          std::string, sdbus::ObjectPath, uint32_t, std::string, sdbus::ObjectPath> Units;
+    std::vector<Units> ListUnits();
 private:
     sdbus::ObjectPath GetUnit(std::string service);
 };

@@ -16,6 +16,10 @@ add_executable(utilchan
     main.cpp
     systemd.cpp
     systemd.h
+    utilites.h
+    utilites.cpp
+    utilchanbot.h
+    utilchanbot.cpp
 )
 
 

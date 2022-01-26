@@ -1,7 +1,7 @@
 #include "systemd.h"
 
 // dbus proxy simple wrapper
-dbusProxy::dbusProxy(std::string destination, std::string objectpath)
+dbusProxy::dbusProxy(std::string destination, std::string objectpath, std::string interface) : interface(interface)
 {
     this->proxy = sdbus::createProxy(destination, objectpath);
     std::cout << destination << " - " << objectpath << " proxy at addr " << std::hex << &this->proxy << std::endl;
@@ -9,21 +9,23 @@ dbusProxy::dbusProxy(std::string destination, std::string objectpath)
 
 sdbus::Variant dbusProxy::getProperty(std::string prop)
 {
-    return proxy->getProperty("Version").onInterface("org.freedesktop.systemd1.Manager");
+    return proxy->getProperty(prop).onInterface(interface);
 }
 
 // systemd manager
-SystemdManager::SystemdManager() : dbusProxy("org.freedesktop.systemd1", "/org/freedesktop/systemd1")
+SystemdManager::SystemdManager() : dbusProxy("org.freedesktop.systemd1", "/org/freedesktop/systemd1", "org.freedesktop.systemd1.Manager")
 {
     std::cout << "init systemd manager proxy" << std::endl;
 }
 
-void SystemdManager::registerJobNew(sdbus::signal_handler func)
-{
-    proxy->registerSignalHandler("org.freedesktop.systemd1.Manager", "JobNew", func);
-    proxy->finishRegistration();
+void SystemdManager::unregisterAll() {
+    proxy->unregister();
 }
 
+void SystemdManager::PowerOff()
+{
+    proxy->callMethod(proxy->createMethodCall(interface, "PowerOff"));
+}
 
 SystemdUnit SystemdManager::getUnit(std::string service)
 {
@@ -32,7 +34,7 @@ SystemdUnit SystemdManager::getUnit(std::string service)
 
 sdbus::ObjectPath SystemdManager::GetUnit(std::string service)
 {
-    auto GetUnitFn = proxy->createMethodCall("org.freedesktop.systemd1.Manager", "GetUnit");
+    auto GetUnitFn = proxy->createMethodCall(interface, "GetUnit");
     GetUnitFn << service;
 
     sdbus::ObjectPath retVal;
@@ -41,8 +43,37 @@ sdbus::ObjectPath SystemdManager::GetUnit(std::string service)
     return retVal;
 }
 
-
-SystemdUnit::SystemdUnit(sdbus::ObjectPath obj_path) : dbusProxy("org.freedesktop.systemd1", obj_path)
+std::vector<SystemdManager::Units> SystemdManager::ListUnits()
 {
-    //
+    // another way: proxy->callMethod("ListUnits").onInterface(interface).storeResultsTo(ligma);
+    auto ListUnitFn = proxy->createMethodCall(interface, "ListUnits");
+
+    std::vector<Units> units;
+    auto msg = proxy->callMethod(ListUnitFn);
+
+    // tip: good to know this.
+    std::string type, contents;
+    msg.peekType(type, contents);
+
+    msg >> units;
+
+    return units;
+}
+
+
+sdbus::ObjectPath SystemdManager::StartUnit(std::string name, std::string mode)
+{
+    auto StartUnitFn = proxy->createMethodCall(interface, "StartUnit");
+    StartUnitFn << name;
+    StartUnitFn << mode;
+
+    sdbus::ObjectPath retVal;
+    proxy->callMethod(StartUnitFn) >> retVal;
+
+    return retVal;
+}
+
+
+SystemdUnit::SystemdUnit(sdbus::ObjectPath obj_path) : dbusProxy("org.freedesktop.systemd1", obj_path, "org.freedesktop.systemd1.Unit")
+{
 }
