@@ -37,11 +37,15 @@ public:
     CALLBACK_RESPONSE SystemdUnitActiveState(SleepyDiscord::Message message);
     CALLBACK_RESPONSE SystemdListUnits(SleepyDiscord::Message message);
 
-
     CALLBACK_RESPONSE help(SleepyDiscord::Message message);
 
     CALLBACK_RESPONSE info(SleepyDiscord::Message message);
     CALLBACK_RESPONSE uptime(SleepyDiscord::Message message);
+
+    CALLBACK_RESPONSE mc_server_list(SleepyDiscord::Message message);
+    CALLBACK_RESPONSE mc_server_status(SleepyDiscord::Message message);
+    CALLBACK_RESPONSE mc_stop_server(SleepyDiscord::Message message);
+    CALLBACK_RESPONSE mc_start_server(SleepyDiscord::Message message);
 
     // internal functions
 

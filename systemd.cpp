@@ -1,4 +1,5 @@
 #include "systemd.h"
+#include <array>
 
 // dbus proxy simple wrapper
 dbusProxy::dbusProxy(std::string destination, std::string objectpath, std::string interface) : interface(interface)
@@ -24,12 +25,18 @@ void SystemdManager::unregisterAll() {
 
 void SystemdManager::PowerOff()
 {
+    // use logind
     proxy->callMethod(proxy->createMethodCall(interface, "PowerOff"));
 }
 
 SystemdUnit SystemdManager::getUnit(std::string service)
 {
     return SystemdUnit(this->GetUnit(service));
+}
+
+SystemdServiceUnit SystemdManager::GetUnitService(std::string service)
+{
+    return SystemdServiceUnit(this->GetUnit(service));
 }
 
 sdbus::ObjectPath SystemdManager::GetUnit(std::string service)
@@ -60,6 +67,20 @@ std::vector<SystemdManager::Units> SystemdManager::ListUnits()
     return units;
 }
 
+std::vector<SystemdManager::Units> SystemdManager::ListUnitsByPatterns(std::vector<std::string> states, std::vector<std::string> patterns)
+{
+    auto ListUnitFn = proxy->createMethodCall(interface, "ListUnitsByPatterns");
+    ListUnitFn << states;
+    ListUnitFn << patterns;
+
+    std::vector<Units> units;
+    auto msg = proxy->callMethod(ListUnitFn);
+
+    msg >> units;
+
+    return units;
+}
+
 
 sdbus::ObjectPath SystemdManager::StartUnit(std::string name, std::string mode)
 {
@@ -73,6 +94,17 @@ sdbus::ObjectPath SystemdManager::StartUnit(std::string name, std::string mode)
     return retVal;
 }
 
+sdbus::ObjectPath SystemdManager::RestartUnit(std::string name, std::string mode)
+{
+    auto StartUnitFn = proxy->createMethodCall(interface, "StartUnit");
+    StartUnitFn << name;
+    StartUnitFn << mode;
+
+    sdbus::ObjectPath retVal;
+    proxy->callMethod(StartUnitFn) >> retVal;
+
+    return retVal;
+}
 
 SystemdUnit::SystemdUnit(sdbus::ObjectPath obj_path) : dbusProxy("org.freedesktop.systemd1", obj_path, "org.freedesktop.systemd1.Unit")
 {
