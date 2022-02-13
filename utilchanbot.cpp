@@ -446,8 +446,36 @@ UtilChanBot::CALLBACK_RESPONSE UtilChanBot::mc_stop_server(SleepyDiscord::Messag
         return INVALID_PERMISSIONS;
     }
 
+    std::vector<std::string> arguments = Utilites::splitString(message.content);
 
-    this->sendMessage(message.channelID, "stop server soon tm :)");
+    if (arguments.size() <= 0) {
+        this->sendMessage(
+                    message.channelID,
+                    "not enough arguments.\n``mc_stop_server <instance-name>``"
+                    );
+        return CALLBACK_RESPONSE::OK;
+    }
+
+    std::string unit_name = arguments.at(0)+"@minecraft.unit";
+
+    try {
+        std::string return_value = systemdManager->StopUnit(arguments.at(0), "replace");
+
+        this->sendMessage(
+                    message.channelID,
+                    Utilites::string_format(
+                        "stopping server %s. (object at %s)",
+                        arguments.at(0).c_str(),
+                        return_value.c_str()
+                    )
+        );
+    }
+    catch (const sdbus::Error &e) {
+        this->sendMessage(
+                    message.channelID,
+                    ":warning: exception!: " + e.getMessage()
+        );
+    }
 
     return OK;
 }

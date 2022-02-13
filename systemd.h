@@ -75,7 +75,7 @@ public:
     sdbus::ObjectPath StartUnit(std::string name, std::string mode);
     // StartUnitWithFlags
     // StartUnitReplace
-    // StopUnit
+    sdbus::ObjectPath StopUnit(std::string name, std::string mode);
     // ReloadUnit
     sdbus::ObjectPath RestartUnit(std::string name, std::string mode);
     // TryRestartUnit

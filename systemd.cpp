@@ -94,6 +94,18 @@ sdbus::ObjectPath SystemdManager::StartUnit(std::string name, std::string mode)
     return retVal;
 }
 
+sdbus::ObjectPath SystemdManager::StopUnit(std::string name, std::string mode)
+{
+    auto StopUnitFn = proxy->createMethodCall(interface, "StopUnit");
+    StopUnitFn << name;
+    StopUnitFn << mode;
+
+    sdbus::ObjectPath retVal;
+    proxy->callMethod(StopUnitFn) >> retVal;
+
+    return retVal;
+}
+
 sdbus::ObjectPath SystemdManager::RestartUnit(std::string name, std::string mode)
 {
     auto StartUnitFn = proxy->createMethodCall(interface, "StartUnit");
